@@ -1,0 +1,122 @@
+{
+  "tasks": {
+    "description": "网页截图推送任务",
+    "hint": "每个任务可以设置一个网页、一个推送目标和一个推送间隔。",
+    "type": "template_list",
+    "templates": {
+      "webpage": {
+        "name": "网页截图任务",
+        "hint": "按固定间隔截取网页整页并推送。",
+        "display_item": "name",
+        "hide_hint_in_list": true,
+        "items": {
+          "name": {
+            "description": "任务名称",
+            "type": "string",
+            "default": "网页截图"
+          },
+          "enabled": {
+            "description": "启用此任务",
+            "type": "bool",
+            "default": true
+          },
+          "url": {
+            "description": "网页地址",
+            "hint": "填写要截图的完整网页地址。",
+            "type": "string",
+            "default": "https://example.com"
+          },
+          "send_to": {
+            "description": "发送到哪里",
+            "hint": "选择群聊或私聊。",
+            "type": "string",
+            "options": [
+              "群聊",
+              "私聊"
+            ],
+            "default": "群聊"
+          },
+          "target_id": {
+            "description": "群号或 QQ 号",
+            "hint": "选择群聊时填群号，只会发送到这个群；选择私聊时填 QQ 号。",
+            "type": "string",
+            "default": ""
+          },
+          "screenshot_text": {
+            "description": "截图附带文本",
+            "hint": "留空则使用全局默认文本。支持 {name} 表示任务名称，{url} 表示网页地址。图片会跟在文本下方。",
+            "type": "string",
+            "default": ""
+          },
+          "interval_minutes": {
+            "description": "每隔多少分钟发送一次",
+            "hint": "例如 30 表示每 30 分钟推送一次，60 表示每 1 小时推送一次。",
+            "type": "float",
+            "default": 60
+          },
+          "run_immediately": {
+            "description": "启动后立即发送一次",
+            "type": "bool",
+            "default": true
+          },
+          "viewport_width": {
+            "description": "浏览器窗口宽度",
+            "type": "int",
+            "default": 1280
+          },
+          "viewport_height": {
+            "description": "浏览器窗口高度",
+            "type": "int",
+            "default": 720
+          },
+          "wait_seconds": {
+            "description": "页面打开后等待秒数",
+            "hint": "网页加载慢就调大。",
+            "type": "float",
+            "default": 5
+          },
+          "timeout_seconds": {
+            "description": "页面加载超时秒数",
+            "type": "float",
+            "default": 30
+          }
+        }
+      }
+    }
+  },
+  "default_viewport_width": {
+    "description": "默认浏览器窗口宽度",
+    "type": "int",
+    "default": 1280
+  },
+  "default_viewport_height": {
+    "description": "默认浏览器窗口高度",
+    "type": "int",
+    "default": 720
+  },
+  "default_wait_seconds": {
+    "description": "默认页面等待秒数",
+    "type": "float",
+    "default": 5
+  },
+  "send_text": {
+    "description": "发送截图时附带文字",
+    "type": "bool",
+    "default": true
+  },
+  "screenshot_text": {
+    "description": "默认截图附带文本",
+    "hint": "支持 {name} 表示任务名称，{url} 表示网页地址。示例：图片已发送，目前状态。图片会跟在文本下方。",
+    "type": "string",
+    "default": "{name} 网页截图"
+  },
+  "platform": {
+    "description": "底层发送平台",
+    "hint": "一般保持默认即可。QQ 群聊和私聊使用 aiocqhttp。",
+    "type": "string",
+    "options": [
+      "aiocqhttp"
+    ],
+    "default": "aiocqhttp"
+  }
+}
