@@ -54,11 +54,6 @@
             "type": "float",
             "default": 60
           },
-          "run_immediately": {
-            "description": "启动后立即发送一次",
-            "type": "bool",
-            "default": true
-          },
           "viewport_width": {
             "description": "浏览器窗口宽度",
             "type": "int",

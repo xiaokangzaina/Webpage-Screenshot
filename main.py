@@ -83,10 +83,8 @@ class WebpageScreenshot(star.Star):
         name = str(task_conf.get("name") or f"网页截图任务{index}")
         interval_minutes = self._safe_float(task_conf.get("interval_minutes"), 60.0)
         interval_seconds = max(60, int(interval_minutes * 60))
-        run_immediately = bool(task_conf.get("run_immediately", True))
 
-        if not run_immediately:
-            await asyncio.sleep(interval_seconds)
+        await asyncio.sleep(interval_seconds)
 
         while self._running:
             started = time.time()
@@ -213,8 +211,10 @@ class WebpageScreenshot(star.Star):
         raw_text = str(event.message_str or "").strip()
         if not raw_text:
             return False
-        if bool(getattr(event, "is_at_or_wake_command", False)) and raw_text == "状态":
+
+        if self._is_at_or_wake_command(event) and raw_text == "状态":
             return True
+
         wake_prefixes = self._get_wake_prefixes(event)
         for prefix in wake_prefixes:
             prefix_text = str(prefix or "").strip()
@@ -231,6 +231,21 @@ class WebpageScreenshot(star.Star):
         if at_me:
             return raw_text.replace(f"@{self_id}", "", 1).strip() == "状态" or raw_text == "状态"
         return False
+
+    def _is_at_or_wake_command(self, event: AstrMessageEvent) -> bool:
+        """兼容 AstrBot 的唤醒词/艾特判断。"""
+        checker = getattr(event, "is_at_or_wake_command", None)
+        if callable(checker):
+            try:
+                return bool(checker())
+            except TypeError:
+                try:
+                    return bool(checker(self_id=event.get_self_id()))
+                except Exception:
+                    return False
+            except Exception:
+                return False
+        return bool(checker)
 
     def _get_wake_prefixes(self, event: AstrMessageEvent) -> list[str]:
         """兼容不同 AstrBot 版本获取唤醒词配置。"""
