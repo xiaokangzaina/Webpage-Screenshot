@@ -105,6 +105,12 @@
     "type": "bool",
     "default": false
   },
+  "notify_on_failure": {
+    "description": "截图失败时发送通知",
+    "hint": "开启后，定时截图任务失败时会向该任务配置的目标群聊或私聊发送失败原因。手动发送“状态”失败时始终会直接回复。",
+    "type": "bool",
+    "default": true
+  },
   "screenshot_text": {
     "description": "默认截图附带文本",
     "hint": "支持 {name} 表示任务名称，{url} 表示网页地址。示例：图片已发送，目前状态。图片会跟在文本下方。",

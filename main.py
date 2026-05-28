@@ -29,6 +29,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "default_wait_seconds": 5,
     "send_text": True,
     "mention_and_quote_sender": False,
+    "notify_on_failure": True,
     "screenshot_text": "{name} 网页截图",
     "platform": "aiocqhttp",
 }
@@ -133,6 +134,7 @@ class WebpageScreenshot(star.Star):
                 raise
             except Exception as exc:
                 logger.error(f"网页截图任务失败：{name}，原因：{exc}", exc_info=True)
+                await self._send_failure_notice(name, task_conf, exc)
 
             elapsed = time.time() - started
             await asyncio.sleep(max(5, interval_seconds - int(elapsed)))
@@ -176,6 +178,31 @@ class WebpageScreenshot(star.Star):
         chain.extend(self._build_message_chain(name, url, image_path, task_conf))
         await event.send(MessageChain(chain=chain))
         event.stop_event()
+
+    async def _send_failure_notice(self, name: str, task_conf: dict[str, Any], exc: Exception) -> None:
+        """定时截图失败时通知目标会话。"""
+        if not bool(self.config.get("notify_on_failure", True)):
+            return
+
+        target_type = self._resolve_target_type(task_conf)
+        target_id = str(task_conf.get("target_id") or "").strip()
+        if not target_id:
+            return
+
+        url = str(task_conf.get("url") or "").strip()
+        text = f"网页截图失败：{name}\n原因：{exc}"
+        if url:
+            text += f"\n地址：{url}"
+
+        try:
+            await StarTools.send_message_by_id(
+                type=target_type,
+                id=target_id,
+                message_chain=MessageChain(chain=[Comp.Plain(text)]),
+                platform=str(self.config.get("platform") or "aiocqhttp"),
+            )
+        except Exception as notice_exc:
+            logger.error(f"网页截图失败通知发送失败：{notice_exc}", exc_info=True)
 
     async def _capture_and_send(self, index: int, name: str, task_conf: dict[str, Any]) -> None:
         url = str(task_conf.get("url") or "").strip()
