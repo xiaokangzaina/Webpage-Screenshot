@@ -99,6 +99,12 @@
     "type": "bool",
     "default": true
   },
+  "mention_and_quote_sender": {
+    "description": "状态回复时艾特并引用发送人",
+    "hint": "开启后，用户发送“状态”触发即时截图时，机器人回复会引用原消息并艾特发送人。定时主动推送没有触发消息，不受此项影响。",
+    "type": "bool",
+    "default": false
+  },
   "screenshot_text": {
     "description": "默认截图附带文本",
     "hint": "支持 {name} 表示任务名称，{url} 表示网页地址。示例：图片已发送，目前状态。图片会跟在文本下方。",

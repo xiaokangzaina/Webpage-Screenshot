@@ -12,7 +12,7 @@ from typing import Any
 import astrbot.api.message_components as Comp
 from astrbot.api import logger, star
 from astrbot.api.event import AstrMessageEvent, filter
-from astrbot.api.star import StarTools
+from astrbot.api.star import StarTools, register
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 
@@ -28,11 +28,18 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "default_viewport_height": 720,
     "default_wait_seconds": 5,
     "send_text": True,
+    "mention_and_quote_sender": False,
     "screenshot_text": "{name} 网页截图",
     "platform": "aiocqhttp",
 }
 
 
+@register(
+    "astrbot_plugin_webpage_screenshot",
+    "xiaokangzaina",
+    "定时截取指定网页并推送到群聊或私聊，支持指定会话手动获取截图",
+    "1.0.2",
+)
 class WebpageScreenshot(star.Star):
     """按固定间隔截取网页整页，并主动推送到群聊或私聊。"""
 
@@ -46,6 +53,8 @@ class WebpageScreenshot(star.Star):
         self.screenshot_dir.mkdir(parents=True, exist_ok=True)
 
     async def initialize(self) -> None:
+        await self._cancel_existing_scheduler_tasks()
+
         if async_playwright is None:
             logger.error("网页截图插件缺少依赖 playwright，请先安装 requirements.txt 内依赖并执行 playwright install chromium")
             return
@@ -59,8 +68,16 @@ class WebpageScreenshot(star.Star):
             return
 
         self._running = True
+        current_task = asyncio.current_task()
+        owner = f"{id(self)}"
         for index, task_conf in enumerate(enabled_tasks, start=1):
-            self._tasks.append(asyncio.create_task(self._run_task(index, task_conf)))
+            task = asyncio.create_task(
+                self._run_task(index, task_conf),
+                name=f"astrbot_plugin_webpage_screenshot:{index}:{owner}",
+            )
+            if current_task is not None:
+                setattr(task, "_webpage_screenshot_owner", current_task)
+            self._tasks.append(task)
         logger.info(f"网页截图插件已启动，启用任务数：{len(self._tasks)}")
 
     async def terminate(self) -> None:
@@ -71,6 +88,28 @@ class WebpageScreenshot(star.Star):
             await asyncio.gather(*self._tasks, return_exceptions=True)
         self._tasks.clear()
         logger.info("网页截图插件已停止")
+
+    async def _cancel_existing_scheduler_tasks(self) -> None:
+        """取消热重载/重复初始化残留的旧定时任务，避免同一配置重复推送。"""
+        current_task = asyncio.current_task()
+        stale_tasks = []
+        for task in asyncio.all_tasks():
+            if task is current_task or task.done():
+                continue
+            try:
+                task_name = task.get_name()
+            except Exception:
+                task_name = ""
+            if task_name.startswith("astrbot_plugin_webpage_screenshot:"):
+                stale_tasks.append(task)
+
+        if not stale_tasks:
+            return
+
+        logger.warning(f"发现残留网页截图定时任务 {len(stale_tasks)} 个，已取消以避免重复推送")
+        for task in stale_tasks:
+            task.cancel()
+        await asyncio.gather(*stale_tasks, return_exceptions=True)
 
     def _merge_config(self, config: dict[str, Any]) -> dict[str, Any]:
         merged = dict(DEFAULT_CONFIG)
@@ -133,7 +172,9 @@ class WebpageScreenshot(star.Star):
             event.stop_event()
             return
 
-        await event.send(MessageChain(chain=self._build_message_chain(name, url, image_path, task_conf)))
+        chain = self._build_sender_prefix(event)
+        chain.extend(self._build_message_chain(name, url, image_path, task_conf))
+        await event.send(MessageChain(chain=chain))
         event.stop_event()
 
     async def _capture_and_send(self, index: int, name: str, task_conf: dict[str, Any]) -> None:
@@ -259,6 +300,25 @@ class WebpageScreenshot(star.Star):
         if isinstance(prefixes, list):
             return [str(item) for item in prefixes]
         return []
+
+
+    def _build_sender_prefix(self, event: AstrMessageEvent) -> list[Any]:
+        """Build optional quote/mention prefix for manual status replies."""
+        if not bool(self.config.get("mention_and_quote_sender", False)):
+            return []
+
+        prefix: list[Any] = []
+        quote_message_id = str(
+            getattr(getattr(event, "message_obj", None), "message_id", "") or ""
+        ).strip()
+        sender_id = str(getattr(event, "get_sender_id", lambda: "")() or "").strip()
+
+        if quote_message_id:
+            prefix.append(Comp.Reply(id=quote_message_id))
+        if sender_id:
+            prefix.append(Comp.At(qq=sender_id))
+            prefix.append(Comp.Plain(" "))
+        return prefix
 
     def _build_message_chain(
         self,
