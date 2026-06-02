@@ -21,6 +21,11 @@ try:
 except Exception:  # pragma: no cover
     async_playwright = None
 
+try:
+    from .web import WebpageScreenshotWebController
+except Exception:  # pragma: no cover
+    WebpageScreenshotWebController = None
+
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "tasks": [],
@@ -52,6 +57,17 @@ class WebpageScreenshot(star.Star):
         self._running = False
         self.screenshot_dir = Path(get_astrbot_temp_path()) / "astrbot_plugin_webpage_screenshot"
         self.screenshot_dir.mkdir(parents=True, exist_ok=True)
+        self._register_web_page()
+
+    def _register_web_page(self) -> None:
+        if WebpageScreenshotWebController is None:
+            return
+        try:
+            self.web = WebpageScreenshotWebController(self.context, self)
+            self.web.register_routes()
+            logger.info("网页截图插件配置页 Web API 已注册")
+        except Exception as exc:
+            logger.warning("网页截图插件配置页注册失败：%s", exc)
 
     async def initialize(self) -> None:
         await self._cancel_existing_scheduler_tasks()
