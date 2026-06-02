@@ -170,11 +170,15 @@ class WebpageScreenshot(star.Star):
         return merged
 
     async def _run_task(self, index: int, task_conf: dict[str, Any]) -> None:
-        name = str(task_conf.get("name") or f"网页截图任务{index}")
-        interval_minutes = self._safe_float(task_conf.get("interval_minutes"), 60.0)
-        interval_seconds = max(60, int(interval_minutes * 60))
-
         while self._running:
+            name = str(task_conf.get("name") or f"网页截图任务{index}")
+            try:
+                live_conf = self.config.get("tasks", [])[index - 1] if 0 < index <= len(self.config.get("tasks", [])) else task_conf
+            except Exception:
+                live_conf = task_conf
+            interval_minutes = self._safe_float(live_conf.get("interval_minutes"), 60.0)
+            interval_seconds = max(60, int(interval_minutes * 60))
+
             now = time.time()
             remainder = now % interval_seconds
             wait_seconds = interval_seconds - remainder
@@ -190,12 +194,12 @@ class WebpageScreenshot(star.Star):
                 break
 
             try:
-                await self._capture_and_send(index, name, task_conf)
+                await self._capture_and_send(index, name, live_conf)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
                 logger.error(f"网页截图任务失败：{name}，原因：{exc}", exc_info=True)
-                await self._send_failure_notice(name, task_conf, exc)
+                await self._send_failure_notice(name, live_conf, exc)
 
 
     @filter.event_message_type(filter.EventMessageType.ALL, priority=maxsize)
