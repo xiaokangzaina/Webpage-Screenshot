@@ -115,6 +115,32 @@ class WebpageScreenshot(star.Star):
     def _merge_config(self, config: dict[str, Any]) -> dict[str, Any]:
         merged = dict(DEFAULT_CONFIG)
         merged.update(config)
+
+        screenshot_settings = config.get("screenshot_settings")
+        if isinstance(screenshot_settings, dict):
+            for key in (
+                "default_viewport_width",
+                "default_viewport_height",
+                "default_wait_seconds",
+            ):
+                if key in screenshot_settings:
+                    merged[key] = screenshot_settings[key]
+
+        message_settings = config.get("message_settings")
+        if isinstance(message_settings, dict):
+            for key in (
+                "send_text",
+                "screenshot_text",
+                "mention_and_quote_sender",
+                "notify_on_failure",
+            ):
+                if key in message_settings:
+                    merged[key] = message_settings[key]
+
+        advanced_settings = config.get("advanced_settings")
+        if isinstance(advanced_settings, dict) and "platform" in advanced_settings:
+            merged["platform"] = advanced_settings["platform"]
+
         tasks = merged.get("tasks")
         merged["tasks"] = [task for task in tasks if isinstance(task, dict)] if isinstance(tasks, list) else []
         return merged
@@ -124,10 +150,21 @@ class WebpageScreenshot(star.Star):
         interval_minutes = self._safe_float(task_conf.get("interval_minutes"), 60.0)
         interval_seconds = max(60, int(interval_minutes * 60))
 
-        await asyncio.sleep(interval_seconds)
-
         while self._running:
-            started = time.time()
+            now = time.time()
+            remainder = now % interval_seconds
+            wait_seconds = interval_seconds - remainder
+            if wait_seconds < 5:
+                wait_seconds += interval_seconds
+            logger.debug(
+                "网页截图任务 %s 下一次按系统时间触发，等待 %.1f 秒",
+                name,
+                wait_seconds,
+            )
+            await asyncio.sleep(wait_seconds)
+            if not self._running:
+                break
+
             try:
                 await self._capture_and_send(index, name, task_conf)
             except asyncio.CancelledError:
@@ -136,8 +173,6 @@ class WebpageScreenshot(star.Star):
                 logger.error(f"网页截图任务失败：{name}，原因：{exc}", exc_info=True)
                 await self._send_failure_notice(name, task_conf, exc)
 
-            elapsed = time.time() - started
-            await asyncio.sleep(max(5, interval_seconds - int(elapsed)))
 
     @filter.event_message_type(filter.EventMessageType.ALL, priority=maxsize)
     async def status_command(self, event: AstrMessageEvent):
