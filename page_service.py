@@ -11,6 +11,7 @@ from astrbot.api import logger
 PLUGIN_DIR = Path(__file__).resolve().parent
 DATA_DIR = PLUGIN_DIR.parents[1]
 CONFIG_FILE = DATA_DIR / "config" / "astrbot_plugin_webpage_screenshot_config.json"
+PLUGIN_TASKS_FILE = PLUGIN_DIR / "data" / "webpage_screenshot_tasks.json"
 GROUP_TOUCH_FILE = PLUGIN_DIR / "data" / "group_config_touch_times.json"
 
 
@@ -81,7 +82,7 @@ class WebpageScreenshotPageService:
                 break
         if not replaced:
             tasks.append(task)
-        self._write_config({"tasks": tasks})
+        self._write_tasks(tasks)
         self._touch_group_config(group_id)
         self._reload_plugin()
         return self.get_group_config(group_id)
@@ -90,14 +91,20 @@ class WebpageScreenshotPageService:
         group_id = str(group_id or "").strip()
         config = self._read_current_config()
         tasks = [task for task in self._tasks(config) if not self._is_group_task(task, group_id)]
-        self._write_config({"tasks": tasks})
+        self._write_tasks(tasks)
         self._touch_group_config(group_id)
         self._reload_plugin()
         return self.get_group_config(group_id)
 
     def _tasks(self, config: dict[str, Any]) -> list[dict[str, Any]]:
         tasks = config.get("tasks", [])
-        return [task for task in tasks if isinstance(task, dict)] if isinstance(tasks, list) else []
+        return [self._ensure_task_template(task) for task in tasks if isinstance(task, dict)] if isinstance(tasks, list) else []
+
+    @staticmethod
+    def _ensure_task_template(task: dict[str, Any]) -> dict[str, Any]:
+        fixed = dict(task)
+        fixed["__template_key"] = "webpage"
+        return fixed
 
     def _is_group_task(self, task: dict[str, Any], group_id: str) -> bool:
         return str(task.get("target_id") or "").strip() == group_id and str(task.get("send_to") or "群聊") == "群聊"
@@ -110,6 +117,7 @@ class WebpageScreenshotPageService:
 
     def _default_group_task(self, group_id: str) -> dict[str, Any]:
         return {
+            "__template_key": "webpage",
             "name": "网页截图",
             "enabled": False,
             "url": "https://example.com",
@@ -224,7 +232,23 @@ class WebpageScreenshotPageService:
                 data = {}
         if isinstance(getattr(self.plugin, "config", None), dict):
             data.update(self.plugin.config)
+        plugin_tasks = self._read_tasks()
+        if plugin_tasks:
+            data["tasks"] = plugin_tasks
         return data
+
+    def _read_tasks(self) -> list[dict[str, Any]]:
+        try:
+            data = json.loads(PLUGIN_TASKS_FILE.read_text(encoding="utf-8-sig"))
+        except Exception:
+            return []
+        return [self._ensure_task_template(item) for item in data if isinstance(item, dict)] if isinstance(data, list) else []
+
+    def _write_tasks(self, tasks: list[dict[str, Any]]) -> None:
+        PLUGIN_TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        fixed = [self._ensure_task_template(task) for task in tasks if isinstance(task, dict)]
+        PLUGIN_TASKS_FILE.write_text(json.dumps(fixed, ensure_ascii=False, indent=2), encoding="utf-8")
+        self._write_config({"tasks": fixed})
 
     def _write_config(self, patch: dict[str, Any]) -> None:
         config = self._read_current_config()

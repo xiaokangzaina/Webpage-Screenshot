@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import json
 import time
 from pathlib import Path
 from sys import maxsize
@@ -131,6 +132,13 @@ class WebpageScreenshot(star.Star):
     def _merge_config(self, config: dict[str, Any]) -> dict[str, Any]:
         merged = dict(DEFAULT_CONFIG)
         merged.update(config)
+        plugin_tasks_file = Path(__file__).resolve().parent / "data" / "webpage_screenshot_tasks.json"
+        try:
+            plugin_tasks = json.loads(plugin_tasks_file.read_text(encoding="utf-8-sig"))
+            if isinstance(plugin_tasks, list):
+                merged["tasks"] = [task for task in plugin_tasks if isinstance(task, dict)]
+        except Exception:
+            pass
 
         screenshot_settings = config.get("screenshot_settings")
         if isinstance(screenshot_settings, dict):

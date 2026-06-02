@@ -1,0 +1,4 @@
+data/
+release_assets/
+__pycache__/
+*.pyc
