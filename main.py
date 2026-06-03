@@ -138,7 +138,7 @@ class WebpageScreenshot(star.Star):
             if isinstance(plugin_tasks, list):
                 merged["tasks"] = [task for task in plugin_tasks if isinstance(task, dict)]
         except Exception:
-            pass
+            merged["tasks"] = []
 
         screenshot_settings = config.get("screenshot_settings")
         if isinstance(screenshot_settings, dict):
@@ -239,6 +239,8 @@ class WebpageScreenshot(star.Star):
 
         chain = self._build_sender_prefix(event)
         chain.extend(self._build_message_chain(name, url, image_path, task_conf))
+        if all(getattr(seg, "type", None) in ("Reply", "At") for seg in chain):
+            chain.append(Comp.Plain(f"{name} 网页截图"))
         await event.send(MessageChain(chain=chain))
         event.stop_event()
 

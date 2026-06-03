@@ -1,90 +1,7 @@
 {
-  "tasks": {
-    "description": "网页截图推送任务",
-    "hint": "配置一个或多个定时截图任务。每个任务包含网页地址、推送目标、定时策略和可选截图参数。",
-    "type": "template_list",
-    "templates": {
-      "webpage": {
-        "name": "网页截图任务",
-        "hint": "按系统时间对齐的固定间隔截取网页并推送，重载或重启 AstrBot 后不会从零重新计时。",
-        "display_item": "name",
-        "hide_hint_in_list": true,
-        "items": {
-          "name": {
-            "description": "任务名称",
-            "type": "string",
-            "default": "网页截图"
-          },
-          "enabled": {
-            "description": "启用此任务",
-            "type": "bool",
-            "default": true
-          },
-          "url": {
-            "description": "网页地址",
-            "hint": "填写要截图的完整网页地址，例如 https://example.com。",
-            "type": "string",
-            "default": "https://example.com"
-          },
-          "send_to": {
-            "description": "发送到哪里",
-            "hint": "选择群聊或私聊。",
-            "type": "string",
-            "options": [
-              "群聊",
-              "私聊"
-            ],
-            "default": "群聊"
-          },
-          "target_id": {
-            "description": "群号或 QQ 号",
-            "hint": "选择群聊时填群号；选择私聊时填 QQ 号。",
-            "type": "string",
-            "default": ""
-          },
-          "interval_minutes": {
-            "description": "推送间隔分钟数",
-            "hint": "例如 30 表示每 30 分钟一次，60 表示每小时一次。实际触发按系统时间对齐。",
-            "type": "float",
-            "default": 60
-          },
-          "screenshot_text": {
-            "description": "本任务附带文本",
-            "hint": "留空则使用全局默认文本。支持 {name} 表示任务名称，{url} 表示网页地址。",
-            "type": "string",
-            "default": ""
-          },
-          "viewport_width": {
-            "description": "任务浏览器宽度",
-            "hint": "只影响当前任务；不填或保持默认即可。",
-            "type": "int",
-            "default": 1280
-          },
-          "viewport_height": {
-            "description": "任务浏览器高度",
-            "hint": "只影响当前任务；不填或保持默认即可。",
-            "type": "int",
-            "default": 720
-          },
-          "wait_seconds": {
-            "description": "任务页面等待秒数",
-            "hint": "网页加载慢就调大。",
-            "type": "float",
-            "default": 5
-          },
-          "timeout_seconds": {
-            "description": "任务页面超时秒数",
-            "hint": "页面长时间无响应时的最大等待时间。",
-            "type": "float",
-            "default": 30
-          }
-        }
-      }
-    }
-  },
   "screenshot_settings": {
     "description": "默认截图参数",
-    "hint": "这些是全局默认截图参数。单个任务内填写的宽度、高度、等待时间会优先覆盖这里。",
+    "hint": "这些是默认截图参数。前端页面中单个群聊填写的截图参数会优先覆盖这里。",
     "type": "object",
     "items": {
       "default_viewport_width": {
@@ -102,36 +19,6 @@
         "hint": "网页加载慢就调大。",
         "type": "float",
         "default": 5
-      }
-    }
-  },
-  "message_settings": {
-    "description": "消息与通知设置",
-    "hint": "控制截图消息文本、状态命令回复方式，以及失败通知。",
-    "type": "object",
-    "items": {
-      "send_text": {
-        "description": "发送截图时附带文字",
-        "type": "bool",
-        "default": true
-      },
-      "screenshot_text": {
-        "description": "默认截图附带文本",
-        "hint": "支持 {name} 表示任务名称，{url} 表示网页地址。任务内文本为空时使用这里。",
-        "type": "string",
-        "default": "{name} 网页截图"
-      },
-      "mention_and_quote_sender": {
-        "description": "状态回复时艾特并引用发送人",
-        "hint": "开启后，用户发送“状态”触发即时截图时，机器人回复会引用原消息并艾特发送人。定时主动推送不受此项影响。",
-        "type": "bool",
-        "default": false
-      },
-      "notify_on_failure": {
-        "description": "截图失败时发送通知",
-        "hint": "开启后，定时截图失败时会向该任务目标发送失败原因。手动“状态”截图失败时始终会直接回复。",
-        "type": "bool",
-        "default": true
       }
     }
   },

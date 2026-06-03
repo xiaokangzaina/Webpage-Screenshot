@@ -103,7 +103,7 @@ class WebpageScreenshotPageService:
     @staticmethod
     def _ensure_task_template(task: dict[str, Any]) -> dict[str, Any]:
         fixed = dict(task)
-        fixed["__template_key"] = "webpage"
+        fixed.pop("__template_key", None)
         return fixed
 
     def _is_group_task(self, task: dict[str, Any], group_id: str) -> bool:
@@ -117,7 +117,6 @@ class WebpageScreenshotPageService:
 
     def _default_group_task(self, group_id: str) -> dict[str, Any]:
         return {
-            "__template_key": "webpage",
             "name": "网页截图",
             "enabled": False,
             "url": "https://example.com",
@@ -248,7 +247,7 @@ class WebpageScreenshotPageService:
         PLUGIN_TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
         fixed = [self._ensure_task_template(task) for task in tasks if isinstance(task, dict)]
         PLUGIN_TASKS_FILE.write_text(json.dumps(fixed, ensure_ascii=False, indent=2), encoding="utf-8")
-        self._write_config({"tasks": fixed})
+        self.plugin.config = self._read_current_config()
 
     def _write_config(self, patch: dict[str, Any]) -> None:
         config = self._read_current_config()
