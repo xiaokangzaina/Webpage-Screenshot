@@ -261,6 +261,10 @@ class WebpageScreenshotPageService:
             self.plugin.config = self.plugin._merge_config(self.plugin.config)
         except Exception:
             pass
+        try:
+            self.plugin._notify_config_updated()
+        except Exception:
+            pass
 
     @staticmethod
     def _load_schema(path: Path) -> dict[str, Any]:

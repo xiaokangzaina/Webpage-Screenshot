@@ -56,6 +56,7 @@ class WebpageScreenshot(star.Star):
         self.config = self._merge_config(config or {})
         self._tasks: list[asyncio.Task] = []
         self._running = False
+        self._config_updated = asyncio.Event()
         self.screenshot_dir = Path(get_astrbot_temp_path()) / "astrbot_plugin_webpage_screenshot"
         self.screenshot_dir.mkdir(parents=True, exist_ok=True)
         self._register_web_page()
@@ -169,6 +170,11 @@ class WebpageScreenshot(star.Star):
         merged["tasks"] = [task for task in tasks if isinstance(task, dict)] if isinstance(tasks, list) else []
         return merged
 
+    def _notify_config_updated(self) -> None:
+        """唤醒所有正在等待中的定时任务，让它们立即重新计算间隔。"""
+        self._config_updated.set()
+        self._config_updated.clear()
+
     async def _run_task(self, index: int, task_conf: dict[str, Any]) -> None:
         while self._running:
             name = str(task_conf.get("name") or f"网页截图任务{index}")
@@ -189,7 +195,10 @@ class WebpageScreenshot(star.Star):
                 name,
                 wait_seconds,
             )
-            await asyncio.sleep(wait_seconds)
+            try:
+                await asyncio.wait_for(self._config_updated.wait(), timeout=wait_seconds)
+            except asyncio.TimeoutError:
+                pass
             if not self._running:
                 break
 
