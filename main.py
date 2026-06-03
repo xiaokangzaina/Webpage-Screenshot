@@ -237,7 +237,7 @@ class WebpageScreenshot(star.Star):
             event.stop_event()
             return
 
-        chain = self._build_sender_prefix(event)
+        chain = self._build_sender_prefix(event, task_conf)
         chain.extend(self._build_message_chain(name, url, image_path, task_conf))
         if all(getattr(seg, "type", None) in ("Reply", "At") for seg in chain):
             chain.append(Comp.Plain(f"{name} 网页截图"))
@@ -282,7 +282,13 @@ class WebpageScreenshot(star.Star):
         wait_seconds = self._safe_float(task_conf.get("wait_seconds"), self.config["default_wait_seconds"])
         timeout_ms = int(max(10, self._safe_float(task_conf.get("timeout_seconds"), 30.0)) * 1000)
 
-        image_path = await self._capture_viewport(index, url, width, height, wait_seconds, timeout_ms)
+        try:
+            image_path = await self._capture_viewport(index, url, width, height, wait_seconds, timeout_ms)
+        except Exception as exc:
+            logger.error(f"网页截图任务截图失败：{name}，原因：{exc}", exc_info=True)
+            await self._send_failure_notice(name, task_conf, exc)
+            return
+
         chain = self._build_message_chain(name, url, image_path, task_conf)
 
         await StarTools.send_message_by_id(
@@ -394,9 +400,10 @@ class WebpageScreenshot(star.Star):
         return []
 
 
-    def _build_sender_prefix(self, event: AstrMessageEvent) -> list[Any]:
+    def _build_sender_prefix(self, event: AstrMessageEvent, task_conf: dict[str, Any] | None = None) -> list[Any]:
         """Build optional quote/mention prefix for manual status replies."""
-        if not bool(self.config.get("mention_and_quote_sender", False)):
+        mention = bool(task_conf.get("mention_and_quote_sender") if task_conf and "mention_and_quote_sender" in task_conf else self.config.get("mention_and_quote_sender", False))
+        if not mention:
             return []
 
         prefix: list[Any] = []
@@ -420,7 +427,8 @@ class WebpageScreenshot(star.Star):
         task_conf: dict[str, Any],
     ) -> list[Any]:
         chain = []
-        if bool(self.config.get("send_text", True)):
+        send_text = bool(task_conf.get("send_text") if "send_text" in task_conf else self.config.get("send_text", True))
+        if send_text:
             text = str(
                 task_conf.get("screenshot_text")
                 or self.config.get("screenshot_text")
