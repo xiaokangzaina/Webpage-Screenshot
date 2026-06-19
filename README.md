@@ -4,6 +4,13 @@
 
 AstrBot 网页截图插件。支持按群聊定时截取网页并推送，也支持在目标会话内发送“状态”立即获取截图。
 
+## v1.3.1 — 配置页滚动逻辑优化
+
+- 配置页面滚动逻辑复刻弥亚开发工具箱：桌面端页面本体固定在视口内。
+- 左侧群聊列表独立滚动，右侧配置区域独立滚动。
+- 修复长配置项场景下页面整体滚动和右侧内容滚动混杂的问题。
+- 小屏幕下自动恢复整页滚动，避免移动端视口被锁死。
+
 ## v1.3.0 — UI 大改
 
 本次更新重点重写了插件 Web 配置页，让网页截图任务配置从简易表单升级为更完整的控制台式界面。
@@ -128,7 +135,7 @@ data/config/astrbot_plugin_webpage_screenshot_config.json
 Release 中的可安装包为：
 
 ```text
-astrbot_plugin_webpage_screenshot-v1.3.0.zip
+astrbot_plugin_webpage_screenshot-v1.3.1.zip
 ```
 
 请下载 Release Assets 中的该 ZIP，而不是 GitHub 自动生成的 Source code。

@@ -45,7 +45,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "astrbot_plugin_webpage_screenshot",
     "xiaokangzaina",
     "定时截取指定网页并推送到群聊或私聊，支持指定会话手动获取截图",
-    "1.3.0",
+    "1.3.1",
 )
 class WebpageScreenshot(star.Star):
     """按固定间隔截取网页整页，并主动推送到群聊或私聊。"""

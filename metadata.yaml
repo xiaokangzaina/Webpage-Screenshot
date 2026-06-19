@@ -1,7 +1,7 @@
 name: astrbot_plugin_webpage_screenshot
 display_name: 网页实时获取截图
 desc: 定时截取指定网页并推送到群聊或私聊，支持指定会话手动获取截图
-version: v1.3.0
+version: v1.3.1
 author: xiaokangzaina
 repo: https://github.com/xiaokangzaina/Webpage-Screenshot
 astrbot_version: ">=4.10.4"
