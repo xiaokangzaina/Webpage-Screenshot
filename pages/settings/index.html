@@ -3,27 +3,104 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>网页截图配置</title>
+  <title>网页截图控制台</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <div class="workspace-shell">
-    <header class="workspace-head">
-      <div><h2>网页截图</h2><p>选择群聊后配置该群的网页截图任务。</p></div>
-      <div class="workspace-actions"><button class="btn-ghost" id="toggleThemeBtn">主题：自动</button><button class="btn-ghost" id="refreshGroupsBtn">同步群列表</button></div>
+  <div class="aurora aurora-a"></div>
+  <div class="aurora aurora-b"></div>
+
+  <div class="dashboard-shell">
+    <header class="hero-card">
+      <div class="hero-main">
+        <div class="app-mark">📸</div>
+        <div>
+          <p class="eyebrow">Webpage Screenshot Console</p>
+          <h1>网页截图控制台</h1>
+          <p class="hero-desc">为不同群聊配置网页定时截图、推送文案、渲染尺寸和失败通知。</p>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <button class="btn glass" id="toggleThemeBtn" type="button">主题：自动</button>
+        <button class="btn primary" id="refreshGroupsBtn" type="button">同步群列表</button>
+      </div>
     </header>
-    <main class="group-workspace">
-      <aside class="group-sidebar">
-        <input id="groupSearchInput" class="input-search" type="text" placeholder="搜索群名或群号" />
-        <div id="groupList" class="group-list empty-hint">群列表加载中…</div>
+
+    <section class="metric-toolbar" aria-label="状态概览与操作">
+      <div class="metric-grid">
+        <article class="metric-card">
+          <span class="metric-icon">👥</span>
+          <div><strong id="totalGroupsMetric">--</strong><small>群聊总数</small></div>
+        </article>
+        <article class="metric-card">
+          <span class="metric-icon">✅</span>
+          <div><strong id="enabledGroupsMetric">--</strong><small>已配置群聊</small></div>
+        </article>
+        <article class="metric-card">
+          <span class="metric-icon">🕒</span>
+          <div><strong id="currentIntervalMetric">--</strong><small>当前间隔</small></div>
+        </article>
+        <article class="metric-card accent">
+          <span class="metric-icon">🌐</span>
+          <div><strong id="currentUrlMetric">未选择</strong><small>当前网页</small></div>
+        </article>
+      </div>
+      <div class="top-actions">
+        <button class="btn danger" id="resetGroupBtn" type="button">清空该群配置</button>
+        <button class="btn primary wide" id="saveGroupBtn" type="button">保存该群配置</button>
+      </div>
+    </section>
+
+    <main class="workspace-grid">
+      <aside class="sidebar-panel">
+        <div class="panel-head compact">
+          <div>
+            <p class="eyebrow">Groups</p>
+            <h2>群聊列表</h2>
+          </div>
+          <span class="pill" id="groupCountPill">0</span>
+        </div>
+        <label class="search-box">
+          <span>⌕</span>
+          <input id="groupSearchInput" type="text" placeholder="搜索群名或群号" autocomplete="off" />
+        </label>
+        <div id="groupList" class="group-list skeleton">群列表加载中…</div>
       </aside>
-      <section class="group-config-panel">
-        <div class="group-config-head"><div><h3 id="currentGroupTitle">请选择群聊</h3><p id="currentGroupMeta">点击左侧群聊即可配置</p></div></div>
-        <div id="groupForm" class="form-stack empty-hint">请从左侧选择一个群聊。</div>
-        <div class="sticky-bar"><button class="btn-ghost danger" id="resetGroupBtn">清空该群配置</button><button class="btn-primary" id="saveGroupBtn">保存该群配置</button></div>
+
+      <section class="editor-panel">
+        <div class="panel-head editor-head">
+          <div>
+            <p class="eyebrow">Configuration</p>
+            <h2 id="currentGroupTitle">请选择群聊</h2>
+            <p id="currentGroupMeta" class="muted">点击左侧群聊即可配置</p>
+          </div>
+          <div class="status-badge" id="enabledBadge">未选择</div>
+        </div>
+
+        <div class="content-grid">
+          <form id="groupForm" class="form-stack empty-state">请从左侧选择一个群聊。</form>
+
+          <aside class="preview-panel">
+            <div class="browser-preview">
+              <div class="browser-top"><i></i><i></i><i></i><span id="previewUrl">https://example.com</span></div>
+              <div class="browser-body">
+                <div class="preview-glow"></div>
+                <strong id="previewName">网页截图</strong>
+                <p id="previewText">配置保存后，机器人会按间隔截图并推送到目标群聊。</p>
+                <div class="preview-size"><span id="previewSize">1280 × 720</span><span id="previewWait">等待 5s</span></div>
+              </div>
+            </div>
+            <div class="tip-card">
+              <b>提示</b>
+              <p>截图文字支持 <code>{name}</code> 和 <code>{url}</code>。网页加载慢时，优先调大等待秒数。</p>
+            </div>
+          </aside>
+        </div>
+
       </section>
     </main>
   </div>
+
   <div class="toast-layer" id="toastLayer"></div>
   <script type="module" src="./app.js"></script>
 </body>

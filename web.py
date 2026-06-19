@@ -29,6 +29,7 @@ class WebpageScreenshotWebController:
         routes = [
             ("/ping", self.page_ping, ["GET"], "Webpage screenshot page ping"),
             ("/settings/bootstrap", self.page_bootstrap, ["GET"], "Load screenshot settings"),
+            ("/settings/theme", self.page_update_theme, ["POST"], "Update settings page theme"),
             ("/settings/groups/refresh", self.page_refresh_groups, ["POST"], "Refresh QQ group list"),
             ("/settings/group", self.page_get_group, ["GET"], "Load group screenshot config"),
             ("/settings/group", self.page_update_group, ["POST"], "Update group screenshot config"),
@@ -70,6 +71,11 @@ class WebpageScreenshotWebController:
 
     async def page_bootstrap(self):
         return self._jsonify({"ok": True, "data": self.service.get_bootstrap_payload()})
+
+    async def page_update_theme(self):
+        payload = await self._request().get_json(force=True, silent=True) or {}
+        result = self.service.update_page_theme(payload.get("theme", "auto"))
+        return self._jsonify({"ok": True, "message": "页面主题已保存", "data": result})
 
     async def page_refresh_groups(self):
         groups = await self.service.list_groups(force=True)

@@ -44,6 +44,13 @@ class WebpageScreenshotPageService:
             "groups": self._build_configured_groups(config),
         }
 
+    def update_page_theme(self, theme: str) -> dict[str, Any]:
+        theme = str(theme or "auto").strip()
+        if theme not in {"auto", "light", "dark"}:
+            theme = "auto"
+        self._write_config({"page_theme": theme})
+        return {"theme": theme}
+
     async def list_groups(self, force: bool = False) -> list[dict[str, Any]]:
         groups: dict[str, dict[str, Any]] = {}
         for client in self._iter_qq_clients():
